@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '../../components/Card';
+import Modal from '../../components/Modal';
 import { intelligenceApi } from '../../api/intelligenceApi';
 import { Calendar, CheckCircle2, Clock, Trash2, Play, Eye, Edit3, Save, Moon } from 'lucide-react';
 
@@ -12,6 +13,7 @@ export default function MyPlannedTrainingPage() {
   const [editingPlanModal, setEditingPlanModal] = useState(null);
   const [editableSchedule, setEditableSchedule] = useState({});
   const [savingEdit, setSavingEdit] = useState(false);
+  const [planToDelete, setPlanToDelete] = useState(null);
 
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -39,13 +41,13 @@ export default function MyPlannedTrainingPage() {
     }
   };
 
-  const handleDeletePlan = async (planId) => {
-    if (!window.confirm('Are you sure you want to delete this training program?')) return;
+  const handleDeletePlan = async () => {
+    if (!planToDelete) return;
+
     try {
-      await intelligenceApi.deletePlan(planId);
-      if (selectedPlanModal?._id === planId) setSelectedPlanModal(null);
-      if (editingPlanModal?._id === planId) setEditingPlanModal(null);
-      loadPlans();
+      await intelligenceApi.deletePlan(planToDelete._id);
+      setPlanToDelete(null);
+      await loadPlans();
     } catch (err) {
       console.error(err);
     }
@@ -210,7 +212,7 @@ export default function MyPlannedTrainingPage() {
                     )}
 
                     <button
-                      onClick={() => handleDeletePlan(plan._id)}
+                      onClick={() => setPlanToDelete(plan)}
                       className="p-2 rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50 border border-brand-border"
                       title="Delete Plan"
                     >
@@ -364,6 +366,34 @@ export default function MyPlannedTrainingPage() {
           </div>
         </div>
       )}
+
+      <Modal
+        isOpen={Boolean(planToDelete)}
+        onClose={() => setPlanToDelete(null)}
+        title="Delete Training Plan"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-brand-muted">
+            Are you sure you want to delete this training plan?
+          </p>
+
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setPlanToDelete(null)}
+              className="px-4 py-2 text-xs font-bold border border-brand-border rounded-xl"
+            >
+              Cancel
+            </button>
+
+            <button
+              onClick={handleDeletePlan}
+              className="px-4 py-2 text-xs font-bold text-white bg-red-600 rounded-xl"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
